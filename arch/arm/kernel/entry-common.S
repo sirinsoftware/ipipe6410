@@ -54,6 +54,7 @@ work_pending:
 	bne	work_resched
 	tst	r1, #_TIF_SIGPENDING|_TIF_NOTIFY_RESUME
 	beq	no_work_pending
+	enable_irq_cond
 	mov	r0, sp				@ 'regs'
 	mov	r2, why				@ 'syscall'
 	tst	r1, #_TIF_SIGPENDING		@ delivering a signal?
@@ -62,6 +63,7 @@ work_pending:
 	b	ret_slow_syscall		@ Check work again
 
 work_resched:
+	enable_irq_cond
 	bl	schedule
 /*
  * "slow" syscall return path.  "why" tells us if this was a real syscall.

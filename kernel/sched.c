@@ -3769,7 +3769,9 @@ need_resched:
 	rq = cpu_rq(cpu);
 	rcu_note_context_switch(cpu);
 	prev = rq->curr;
-
+if (unlikely(prev->state & TASK_ATOMICSWITCH))
+		/* Pop one disable level -- one still remains. */
+		preempt_enable();
 	release_kernel_lock(prev);
 need_resched_nonpreemptible:
 
@@ -3820,7 +3822,8 @@ need_resched_nonpreemptible:
 		rq->curr = next;
 		++*switch_count;
 
-		context_switch(rq, prev, next); /* unlocks the rq */
+ 		if (context_switch(rq, prev, next)) /* unlocks the rq */
+  			return 1; /* task hijacked by higher domain */
 		/*
 		 * The context switch have flipped the stack from under us
 		 * and restored the local variables which were saved when
@@ -3829,8 +3832,10 @@ need_resched_nonpreemptible:
 		 */
 		cpu = smp_processor_id();
 		rq = cpu_rq(cpu);
-	} else
-		raw_spin_unlock_irq(&rq->lock);
+	} else {
+  		prev->state &= ~TASK_ATOMICSWITCH;
+ 		raw_spin_unlock_irq(&rq->lock);
+	}
 
 	post_schedule(rq);
 
@@ -3961,7 +3966,8 @@ asmlinkage void __sched preempt_schedule_irq(void)
 	do {
 		add_preempt_count(PREEMPT_ACTIVE);
 		local_irq_enable();
-		schedule();
+		if (schedule())
+			return;
 		local_irq_disable();
 		sub_preempt_count(PREEMPT_ACTIVE);
 
