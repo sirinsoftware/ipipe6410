@@ -74,6 +74,10 @@ void show_pte(struct mm_struct *mm, unsigned long addr)
 	if (!mm)
 		mm = &init_mm;
 
+#ifdef CONFIG_ARM_FCSE
+	printk(KERN_ALERT "fcse pid: %ld, 0x%08lx\n",
+	       mm->context.fcse.pid >> FCSE_PID_SHIFT, mm->context.fcse.pid);
+#endif /* CONFIG_ARM_FCSE */
 	printk(KERN_ALERT "pgd = %p\n", mm->pgd);
 	pgd = pgd_offset(mm, addr);
 	printk(KERN_ALERT "[%08lx] *pgd=%08lx", addr, pgd_val(*pgd));
@@ -162,10 +166,20 @@ __do_user_fault(struct task_struct *tsk, unsigned long addr,
 	if (user_debug & UDBG_SEGV) {
 		printk(KERN_DEBUG "%s: unhandled page fault (%d) at 0x%08lx, code 0x%03x\n",
 		       tsk->comm, sig, addr, fsr);
+#ifdef CONFIG_ARM_FCSE_DYNPID
+		/* Disable preemption to avoid page tables changing under our
+		   feet */
+		preempt_disable();
+#endif /* CONFIG_ARM_FCSE_DYNPID */
 		show_pte(tsk->mm, addr);
+#ifdef CONFIG_ARM_FCSE_DYNPID
+		preempt_enable();
+#endif /* CONFIG_ARM_FCSE_DYNPID */
 		show_regs(regs);
 	}
 #endif
+
+	fcse_notify_segv(tsk->mm, addr, regs);
 
 	tsk->thread.address = addr;
 	tsk->thread.error_code = fsr;
@@ -265,6 +279,9 @@ do_page_fault(unsigned long addr, unsigned int fsr, struct pt_regs *regs)
 	int fault, sig, code;
 
 	if (notify_page_fault(regs, fsr))
+		return 0;
+
+	if (ipipe_trap_notify(IPIPE_TRAP_ACCESS,regs))
 		return 0;
 
 	tsk = current;
@@ -393,6 +410,9 @@ do_translation_fault(unsigned long addr, unsigned int fsr,
 	if (addr < TASK_SIZE)
 		return do_page_fault(addr, fsr, regs);
 
+	if (ipipe_trap_notify(IPIPE_TRAP_ACCESS,regs))
+		return 0;
+
 	if (user_mode(regs))
 		goto bad_area;
 
@@ -448,6 +468,10 @@ do_translation_fault(unsigned long addr, unsigned int fsr,
 static int
 do_sect_fault(unsigned long addr, unsigned int fsr, struct pt_regs *regs)
 {
+
+	if (ipipe_trap_notify(IPIPE_TRAP_SECTION,regs))
+		return 0;
+
 	do_bad_area(addr, fsr, regs);
 	return 0;
 }
@@ -458,6 +482,9 @@ do_sect_fault(unsigned long addr, unsigned int fsr, struct pt_regs *regs)
 static int
 do_bad(unsigned long addr, unsigned int fsr, struct pt_regs *regs)
 {
+	if (ipipe_trap_notify(IPIPE_TRAP_DABT,regs))
+		return 0;
+
 	return 1;
 }
 
@@ -533,6 +560,9 @@ do_DataAbort(unsigned long addr, unsigned int fsr, struct pt_regs *regs)
 	struct siginfo info;
 
 	if (!inf->fn(addr, fsr & ~FSR_LNX_PF, regs))
+		return;
+
+	if (ipipe_trap_notify(IPIPE_TRAP_UNKNOWN,regs))
 		return;
 
 	printk(KERN_ALERT "Unhandled fault: %s (0x%03x) at 0x%08lx\n",
