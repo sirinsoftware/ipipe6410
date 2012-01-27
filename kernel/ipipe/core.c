@@ -91,7 +91,7 @@ EXPORT_SYMBOL(__ipipe_root_status_addr);
 #endif /* __GNUC__ < 4 */
 
 DEFINE_PER_CPU(struct ipipe_percpu_domain_data *, ipipe_percpu_daddr[CONFIG_IPIPE_DOMAINS]) =
-{ [IPIPE_ROOT_SLOT] = (struct ipipe_percpu_domain_data *)&__raw_get_cpu_var(ipipe_percpu_darray) };
+{ [IPIPE_ROOT_SLOT] = /*(struct ipipe_percpu_domain_data *)&__raw_get_cpu_var(ipipe_percpu_darray)*/1 };
 EXPORT_PER_CPU_SYMBOL(ipipe_percpu_daddr);
 #endif /* !CONFIG_SMP */
 
@@ -1794,7 +1794,7 @@ void ipipe_update_hostrt(struct timespec *wall_time, struct clocksource *clock)
 	hostrt_data.shift = clock->shift;
 	hostrt_data.wall_time_sec = wall_time->tv_sec;
 	hostrt_data.wall_time_nsec = wall_time->tv_nsec;
-	hostrt_data.wall_to_monotonic = wall_to_monotonic;
+	hostrt_data.wall_to_monotonic = *wall_time;
 
 	/* Note: The event receiver is responsible for providing
 	   proper locking */

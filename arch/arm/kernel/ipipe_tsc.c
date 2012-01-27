@@ -112,7 +112,7 @@ void __ipipe_tsc_update(void)
 	ipipe_tsc_value->last_tsc = __ipipe_tsc_get() - 1;
 }
 EXPORT_SYMBOL(__ipipe_tsc_get);
-
+#ifdef GENERIC_TIME_VSYSCALL
 void update_vsyscall(struct timespec *wall_time,
 		     struct clocksource *clock, u32 mult)
 {
@@ -123,3 +123,4 @@ void update_vsyscall(struct timespec *wall_time,
 void update_vsyscall_tz(void)
 {
 }
+#endif

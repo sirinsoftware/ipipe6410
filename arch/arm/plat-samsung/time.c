@@ -68,13 +68,22 @@ static unsigned long free_running_tcon = 0;
 static unsigned long timer_lxlost = 0;
 
 #ifdef CONFIG_IPIPE
+
+#define ELFIN_VIC0_BASE_ADDR    (0x71200000)
+#define ELFIN_VIC1_BASE_ADDR    (0x71300000)
+
+#define oSOFTINT                                0x018
+
+#define VIC0SOFTINT                             (ELFIN_VIC0_BASE_ADDR + oSOFTINT)
+
+
 unsigned int __ipipe_mach_ticks_per_jiffy;
 EXPORT_SYMBOL(__ipipe_mach_ticks_per_jiffy);
 
 int __ipipe_mach_timerint = IRQ_TIMER4;
 EXPORT_SYMBOL(__ipipe_mach_timerint);
 
-static unsigned long timer_ackval = 1UL << (IRQ_TIMER4 - IRQ_EINT0);
+static unsigned long timer_ackval = 1UL << (IRQ_TIMER4 - IRQ_EINT0_3 - IRQ_VIC1_BASE);
 
 static struct __ipipe_tscinfo tsc_info = {
 	.type = IPIPE_TSC_TYPE_DECREMENTER,
@@ -210,7 +219,7 @@ static void s3c2410_timer_setup (void)
 	unsigned long tcnt;
 	unsigned long tcfg1;
 	unsigned long tcfg0;
-	unsigned long intmask;
+	//!!unsigned long intmask;
 
 	tcnt = TICK_MAX;  /* default value for tcnt */
 
@@ -284,9 +293,9 @@ static void s3c2410_timer_setup (void)
 	__raw_writel(tcon, S3C2410_TCON);
 
 	/* Mask timer3 interrupt. */
-	intmask = __raw_readl(S3C2410_INTMSK);
-	intmask |= 1UL << (IRQ_TIMER3 - IRQ_EINT0);
-	__raw_writel(intmask, S3C2410_INTMSK);
+	//!!intmask = __raw_readl(S3C2410_INTMSK);
+	//!!intmask |= 1UL << (IRQ_TIMER3 - IRQ_EINT0_3 - IRQ_VIC1_BASE);
+	//!!__raw_writel(intmask, S3C2410_INTMSK);
 
 	/* Set timer values */
 	__raw_writel(tcnt, S3C2410_TCNTB(4));
@@ -356,8 +365,9 @@ struct sys_timer s3c24xx_timer = {
 #ifdef CONFIG_IPIPE
 void __ipipe_mach_acktimer(void)
 {
-	__raw_writel(timer_ackval, S3C2410_SRCPND);
-	__raw_writel(timer_ackval, S3C2410_INTPND);
+	__raw_writel(timer_ackval, VIC0SOFTINT);
+	//!!__raw_writel(timer_ackval, S3C2410_SRCPND);
+	//!!__raw_writel(timer_ackval, S3C2410_INTPND);
 }
 
 static inline void set_dec(unsigned long reload)
