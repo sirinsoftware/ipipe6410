@@ -91,7 +91,7 @@ EXPORT_SYMBOL(__ipipe_root_status_addr);
 #endif /* __GNUC__ < 4 */
 
 DEFINE_PER_CPU(struct ipipe_percpu_domain_data *, ipipe_percpu_daddr[CONFIG_IPIPE_DOMAINS]) =
-{ [IPIPE_ROOT_SLOT] = /*(struct ipipe_percpu_domain_data *)&__raw_get_cpu_var(ipipe_percpu_darray)*/1 };
+{ [IPIPE_ROOT_SLOT] = /*(struct ipipe_percpu_domain_data *)&ipipe_percpu_darray };
 EXPORT_PER_CPU_SYMBOL(ipipe_percpu_daddr);
 #endif /* !CONFIG_SMP */
 
