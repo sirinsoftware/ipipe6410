@@ -275,14 +275,14 @@ int ipipe_get_sysinfo(struct ipipe_sysinfo *info)
 
 static void __ipipe_ack_irq(unsigned irq, struct irq_desc *desc)
 {
-	desc->ipipe_ack(irq, desc);
+	//desc->ipipe_ack(irq, desc);
 }
 
 static void __maybe_unused __ipipe_ack_timerirq(unsigned int irq, struct irq_desc *desc)
 {
-	desc->ipipe_ack(irq, desc);
+	//desc->ipipe_ack(irq, desc);
 	__ipipe_mach_acktimer();
-	desc->ipipe_end(irq, desc);
+	//desc->ipipe_end(irq, desc);
 }
 
 void __ipipe_enable_irqdesc(struct ipipe_domain *ipd, unsigned irq)

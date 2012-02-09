@@ -673,7 +673,7 @@ handle_percpu_irq(unsigned int irq, struct irq_desc *desc)
 		desc->chip->eoi(irq);
 }
 
-#ifdef CONFIG_IPIPE
+#if 0 //#ifdef CONFIG_IPIPE
 
 void __ipipe_ack_simple_irq(unsigned irq, struct irq_desc *desc)
 {
