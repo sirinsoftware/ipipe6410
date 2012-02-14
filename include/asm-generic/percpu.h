@@ -89,7 +89,7 @@ extern void setup_per_cpu_areas(void);
 	(typeof(*(__p)) __kernel __force *)(__p);	\
 })
 
-#define per_cpu(var, cpu)	(*((void)(cpu), VERIFY_PERCPU_PTR(&(var))))
+#define per_cpu(var, cpu)	 (*((void)(cpu), &(var)))
 #define __get_cpu_var(var)	(var)
 #define __raw_get_cpu_var(var)	(var)
 #define __ipipe_get_cpu_var(var)		__raw_get_cpu_var(var)

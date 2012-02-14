@@ -69,6 +69,19 @@ static unsigned long timer_lxlost = 0;
 
 #ifdef CONFIG_IPIPE
 
+#define S3C_IRQ_OFFSET  (32)
+#define S3C_IRQ(x)      ((x) + S3C_IRQ_OFFSET)
+
+//#define S3C_VIC0_BASE   S3C_IRQ(0)
+//#define S3C_VIC1_BASE   S3C_IRQ(32)
+ 
+#define S3C64XX_TIMER_IRQ(x)    S3C_IRQ(64 + (x))
+#define IRQ_TIMER4              S3C64XX_TIMER_IRQ(4)
+
+//#define S3C64XX_IRQ_VIC0(x)     (S3C_VIC0_BASE + (x))
+//#define S3C64XX_IRQ_VIC1(x)     (S3C_VIC1_BASE + (x))
+#define IRQ_EINT0_3             S3C64XX_IRQ_VIC0(0)
+ 
 #define ELFIN_VIC0_BASE_ADDR    (0x71200000)
 #define ELFIN_VIC1_BASE_ADDR    (0x71300000)
 
@@ -83,7 +96,8 @@ EXPORT_SYMBOL(__ipipe_mach_ticks_per_jiffy);
 int __ipipe_mach_timerint = IRQ_TIMER4;
 EXPORT_SYMBOL(__ipipe_mach_timerint);
 
-static unsigned long timer_ackval = 1UL << (IRQ_TIMER4 - IRQ_EINT0_3 - IRQ_VIC1_BASE);
+//static unsigned long timer_ackval = 1UL << (IRQ_TIMER4 - IRQ_EINT0_3 - IRQ_VIC1_BASE);
+static unsigned long timer_ackval = 1UL << (IRQ_TIMER4 - IRQ_TIMER0);
 
 static struct __ipipe_tscinfo tsc_info = {
 	.type = IPIPE_TSC_TYPE_DECREMENTER,
@@ -296,7 +310,13 @@ static void s3c2410_timer_setup (void)
 	//!!intmask = __raw_readl(S3C2410_INTMSK);
 	//!!intmask |= 1UL << (IRQ_TIMER3 - IRQ_EINT0_3 - IRQ_VIC1_BASE);
 	//!!__raw_writel(intmask, S3C2410_INTMSK);
-
+	
+      u32 reg = __raw_readl(S3C64XX_TINT_CSTAT);
+ 
+      reg &= 0x1f;  /* mask out pending interrupts */
+      reg &= ~(1 << (IRQ_TIMER3 - IRQ_TIMER0));
+    __raw_writel(reg, S3C64XX_TINT_CSTAT);
+	
 	/* Set timer values */
 	__raw_writel(tcnt, S3C2410_TCNTB(4));
 	__raw_writel(tcnt, S3C2410_TCMPB(4));
@@ -363,15 +383,24 @@ struct sys_timer s3c24xx_timer = {
 };
 
 #ifdef CONFIG_IPIPE
+
+extern void printascii (const char* buf);
+
 void __ipipe_mach_acktimer(void)
 {
-	__raw_writel(timer_ackval, VIC0SOFTINT);
+printk("__ipipe_mach_acktimer!!!!!!!!!!!!!!\n");
+       u32 reg = __raw_readl(S3C64XX_TINT_CSTAT);
+       reg &= 0x1f;
+       reg |= (1 << 5) << (timer_ackval- IRQ_TIMER0);
+     __raw_writel(reg, S3C64XX_TINT_CSTAT);
+    //__raw_writel(timer_ackval, VIC0SOFTINT);
 	//!!__raw_writel(timer_ackval, S3C2410_SRCPND);
 	//!!__raw_writel(timer_ackval, S3C2410_INTPND);
 }
 
 static inline void set_dec(unsigned long reload)
 {
+printk("__set_dec!!!!!!!!!!!!!\n");
 	__raw_writel(reload, S3C2410_TCNTB(4));
 	/* Manual update */
 	__raw_writel(free_running_tcon | S3C2410_TCON_T4MANUALUPD, S3C2410_TCON);
@@ -383,6 +412,7 @@ void __ipipe_mach_set_dec(unsigned long reload)
 {
 	unsigned long flags;
 
+printk("__ipipe_mach_set_dec!!!!!!!!!!!!!!!\n");
 	spin_lock_irqsave(&timer_lock, flags);
 	timer_lxlost += getticksoffset_tscupdate();
 	set_dec(reload);
@@ -392,6 +422,7 @@ EXPORT_SYMBOL(__ipipe_mach_set_dec);
 
 void __ipipe_mach_release_timer(void)
 {
+printk("__ipipe_mach_release_timer!!!!!!!!!!!!!!!!\n");
 	free_running_tcon |= S3C2410_TCON_T4RELOAD;
 	__ipipe_mach_set_dec(__ipipe_mach_ticks_per_jiffy - 1);
 	free_running_tcon &= ~S3C2410_TCON_T4RELOAD;
@@ -400,6 +431,7 @@ EXPORT_SYMBOL(__ipipe_mach_release_timer);
 
 unsigned long __ipipe_mach_get_dec(void)
 {
+printk(" __ipipe_mach_get_dec!!!!!!!!!!!!1\n");
 	return __raw_readl(S3C2410_TCNTO(4));
 }
 #endif /* CONFIG_IPIPE */
