@@ -24,7 +24,7 @@
 
 static void s3c_irq_demux_vic_timer(unsigned int irq, struct irq_desc *desc)
 {
-	generic_handle_irq((int)desc->handler_data);
+	ipipe_handle_chained_irq((int)desc->handler_data);
 }
 
 /* We assume the IRQ_TIMER0..IRQ_TIMER4 range is continuous. */

@@ -833,7 +833,7 @@ asmlinkage int vprintk(const char *fmt, va_list args)
 	printed_len += vscnprintf(printk_buf + printed_len,
 				  sizeof(printk_buf) - printed_len, fmt, args);
 
-	printascii(printk_buf);
+	//!!printascii(printk_buf);
 	
 	p = printk_buf;
 

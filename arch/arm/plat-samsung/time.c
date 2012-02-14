@@ -388,7 +388,6 @@ extern void printascii (const char* buf);
 
 void __ipipe_mach_acktimer(void)
 {
-printk("__ipipe_mach_acktimer!!!!!!!!!!!!!!\n");
        u32 reg = __raw_readl(S3C64XX_TINT_CSTAT);
        reg &= 0x1f;
        reg |= (1 << 5) << (timer_ackval- IRQ_TIMER0);
@@ -400,7 +399,6 @@ printk("__ipipe_mach_acktimer!!!!!!!!!!!!!!\n");
 
 static inline void set_dec(unsigned long reload)
 {
-printk("__set_dec!!!!!!!!!!!!!\n");
 	__raw_writel(reload, S3C2410_TCNTB(4));
 	/* Manual update */
 	__raw_writel(free_running_tcon | S3C2410_TCON_T4MANUALUPD, S3C2410_TCON);
@@ -412,7 +410,6 @@ void __ipipe_mach_set_dec(unsigned long reload)
 {
 	unsigned long flags;
 
-printk("__ipipe_mach_set_dec!!!!!!!!!!!!!!!\n");
 	spin_lock_irqsave(&timer_lock, flags);
 	timer_lxlost += getticksoffset_tscupdate();
 	set_dec(reload);
@@ -422,7 +419,6 @@ EXPORT_SYMBOL(__ipipe_mach_set_dec);
 
 void __ipipe_mach_release_timer(void)
 {
-printk("__ipipe_mach_release_timer!!!!!!!!!!!!!!!!\n");
 	free_running_tcon |= S3C2410_TCON_T4RELOAD;
 	__ipipe_mach_set_dec(__ipipe_mach_ticks_per_jiffy - 1);
 	free_running_tcon &= ~S3C2410_TCON_T4RELOAD;
@@ -431,7 +427,6 @@ EXPORT_SYMBOL(__ipipe_mach_release_timer);
 
 unsigned long __ipipe_mach_get_dec(void)
 {
-printk(" __ipipe_mach_get_dec!!!!!!!!!!!!1\n");
 	return __raw_readl(S3C2410_TCNTO(4));
 }
 #endif /* CONFIG_IPIPE */

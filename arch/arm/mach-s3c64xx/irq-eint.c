@@ -166,7 +166,7 @@ static inline void s3c_irq_demux_eint(unsigned int start, unsigned int end)
 
 	for (irq = IRQ_EINT(start); irq <= IRQ_EINT(end); irq++) {
 		if (status & 1)
-			generic_handle_irq(irq);
+			ipipe_handle_chained_irq(irq);
 
 		status >>= 1;
 	}
