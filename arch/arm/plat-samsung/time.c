@@ -175,7 +175,7 @@ static inline unsigned long getticksoffset_tscupdate(void)
 	tval = timer_freerunning_getvalue();
 	ticks = timer_freerunning_getticksoffset(tval);
 	last_free_running_tcnt = tval;
-	__ipipe_tsc_update();
+	//!!__ipipe_tsc_update();
 	return ticks;
 }
 #else
@@ -265,12 +265,13 @@ static void s3c2410_timer_setup (void)
 
 		/* configure clock tick */
 
-		timer_usec_ticks = timer_mask_usec_ticks(6, pclk);
+		//!!timer_usec_ticks = timer_mask_usec_ticks(6, pclk);
+		timer_usec_ticks = timer_mask_usec_ticks(2, pclk);
 
 		tscaler = clk_get_parent(tdiv);
 
-		clk_set_rate(tscaler, pclk / 3);
-		clk_set_rate(tdiv, pclk / 6);
+		clk_set_rate(tscaler, pclk / 2);
+		clk_set_rate(tdiv, pclk / 2);
 		clk_set_parent(tin, tdiv);
 
 		tcnt = clk_get_rate(tin) / HZ;
@@ -389,6 +390,7 @@ extern void printascii (const char* buf);
 void __ipipe_mach_acktimer(void)
 {
        u32 reg = __raw_readl(S3C64XX_TINT_CSTAT);
+       __ipipe_tsc_update();
        reg &= 0x1f;
        reg |= (1 << 5) << (timer_ackval- IRQ_TIMER0);
      __raw_writel(reg, S3C64XX_TINT_CSTAT);
