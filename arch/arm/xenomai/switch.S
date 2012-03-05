@@ -1,1 +1,0 @@
-/home/oleksandr/Work/not-seq/xenomai/xenomai-head/ksrc/arch/arm/switch.S
